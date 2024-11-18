@@ -140,6 +140,64 @@ def entrada_estoque():
         st.warning("Senha incorreta! Acesso negado à entrada de estoque.")
 
 
+def saida_vendas():
+    global registro_estoque_df
+    init_dataframes()
+
+    st.header("Saída de Vendas")
+
+    estoque_atualizado_df = calcular_estoque_atualizado()
+    produtos_disponiveis = estoque_atualizado_df[estoque_atualizado_df["Saldo"] > 0]
+    produtos_ordenados = produtos_disponiveis.sort_values(["Produto", "Data de Validade"], ascending=[True, True])
+    produtos_ordenados = produtos_ordenados.drop_duplicates(subset=["Produto", "Lote"], keep="last")
+
+    produtos_selecionados = st.multiselect("Selecione os Produtos",
+                                           produtos_ordenados["Produto"] + " - " + produtos_ordenados["Lote"])
+    if not produtos_selecionados:
+        st.warning("Por favor, selecione ao menos um produto.")
+        return
+
+    vendas_temp_data = []
+    codigo_venda_temp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    for produto_lote in produtos_selecionados:
+        produto, lote = produto_lote.split(" - ")
+        st.subheader(f"Informações do Produto: {produto} (Lote: {lote})")
+        quantidade_disponivel = estoque_atualizado_df.loc[
+            (estoque_atualizado_df["Produto"] == produto) & (estoque_atualizado_df["Lote"] == lote), "Saldo"].values[0]
+        quantidade = st.number_input(f"Quantidade para {produto} (Lote: {lote})", min_value=1,
+                                     max_value=int(quantidade_disponivel), step=1, key=f"quantidade_{produto}_{lote}")
+        metodo_pagamento = st.selectbox("Selecione o Método de Pagamento",
+                                        options=["Dinheiro", "Pix", "Cartão de Crédito", "Cartão de Débito"],
+                                        key=f"metodo_pagamento_{produto}_{lote}")
+        valor_minimo_venda = registro_estoque_df.loc[(registro_estoque_df["Produto"] == produto) & (
+                    registro_estoque_df["Lote"] == lote), "Valor de Venda (R$)"].values[0]
+        valor_unitario = st.number_input(f"Valor Unitário (R$) para {produto} (Lote: {lote})",
+                                         min_value=valor_minimo_venda,
+                                         help=f"Digite o valor de venda mínimo de {valor_minimo_venda} para o produto.",
+                                         key=f"valor_unitario_{produto}_{lote}")
+        valor_total = valor_unitario * quantidade
+        data_hora_venda = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        vendas_temp_data.append(
+            {"Código da Venda": codigo_venda_temp, "Produto": produto, "Lote": lote, "Quantidade": quantidade,
+             "Método de Pagamento": metodo_pagamento, "Valor Unitário (R$)": valor_unitario,
+             "Valor Total (R$)": valor_total, "Data da Venda": data_hora_venda})
+
+    global vendas_temp_df
+    vendas_temp_df = pd.DataFrame(vendas_temp_data)
+
+    if st.button("Registrar Venda"):
+        global vendas_df
+        vendas_df = pd.concat([vendas_df, vendas_temp_df], ignore_index=True)
+        salvar_dados()
+        st.success("Venda registrada com sucesso.")
+        vendas_df, registro_estoque_df = init_dataframes()
+
+    st.subheader("Produtos Selecionados para Venda:")
+    st.dataframe(vendas_temp_df)        
+
+
 # Página de Visualização de Dados
 def visualizar_dados():
     vendas_df, registro_estoque_df = init_dataframes()
@@ -162,10 +220,14 @@ def visualizar_dados():
 
 
 # Navegação
-page = st.sidebar.radio("Selecione uma opção", options=["Entrada de Estoque", "Visualizar Dados"])
+page = st.sidebar.radio("Selecione uma opção", options=["Entrada de Estoque", "Saída de Vendas", "Visualizar Dados"])
 vendas_df, registro_estoque_df = init_dataframes()
-
+# Exibindo a página selecionada
 if page == "Entrada de Estoque":
+    vendas_df, registro_estoque_df = init_dataframes()
     entrada_estoque()
-elif page == "Visualizar Dados":
+elif page == "Saída de Vendas":
+    vendas_df, registro_estoque_df = init_dataframes()
+    saida_vendas()
+else:
     visualizar_dados()
