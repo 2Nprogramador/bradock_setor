@@ -205,44 +205,44 @@ def visualizar_dados():
 
     senha_armazenada = st.secrets["auth"]["senha_armazenada"]  # Altere para uma senha segura
     entrada_senha = st.sidebar.text_input("Digite a senha para visualizar dados:", type="password")
-    st.sidebar.text("Pressione Enter após digitar a senha.")
+    mostrar_senha = st.sidebar.button("Aperte o botão para confirmar sua senha.")
+    if mostrar_senha:
+        if entrada_senha == senha_armazenada:
+            st.header("Registro de Estoque")
 
-    if entrada_senha == senha_armazenada:
-        st.header("Registro de Estoque")
+            st.dataframe(registro_estoque_df)
 
-        st.dataframe(registro_estoque_df)
+            st.header("Vendas")
+            st.dataframe(vendas_df)
 
-        st.header("Vendas")
-        st.dataframe(vendas_df)
+            st.header("Estoque Atualizado")
+            estoque_atualizado_df = calcular_estoque_atualizado()
+            st.dataframe(estoque_atualizado_df)
 
-        st.header("Estoque Atualizado")
-        estoque_atualizado_df = calcular_estoque_atualizado()
-        st.dataframe(estoque_atualizado_df)
+            vendas_com_custo_df = pd.merge(vendas_df, registro_estoque_df[["Produto", "Lote", "Custo (R$)"]],
+                                           on=["Produto", "Lote"], how="left")
+            vendas_com_custo_df["Custo Total Vendido (R$)"] = vendas_com_custo_df["Quantidade"] * vendas_com_custo_df[
+                "Custo (R$)"]
+            valor_total_vendido = vendas_com_custo_df["Valor Total (R$)"].sum()
+            custo_total_vendido = vendas_com_custo_df["Custo Total Vendido (R$)"].sum()
+            lucro_total = valor_total_vendido - custo_total_vendido
+            produto_mais_vendido = vendas_df.groupby("Produto")["Quantidade"].sum().idxmax()
+            custo_em_estoque = estoque_atualizado_df["Custos Totais"].sum()
 
-        vendas_com_custo_df = pd.merge(vendas_df, registro_estoque_df[["Produto", "Lote", "Custo (R$)"]],
-                                       on=["Produto", "Lote"], how="left")
-        vendas_com_custo_df["Custo Total Vendido (R$)"] = vendas_com_custo_df["Quantidade"] * vendas_com_custo_df[
-            "Custo (R$)"]
-        valor_total_vendido = vendas_com_custo_df["Valor Total (R$)"].sum()
-        custo_total_vendido = vendas_com_custo_df["Custo Total Vendido (R$)"].sum()
-        lucro_total = valor_total_vendido - custo_total_vendido
-        produto_mais_vendido = vendas_df.groupby("Produto")["Quantidade"].sum().idxmax()
-        custo_em_estoque = estoque_atualizado_df["Custos Totais"].sum()
+            mostrar_informacoes_negocio = st.sidebar.checkbox("Mostrar Informações do Negócio", value=False)
 
-        mostrar_informacoes_negocio = st.sidebar.checkbox("Mostrar Informações do Negócio", value=False)
+            if mostrar_informacoes_negocio:
+                st.header("Informações sobre o Negócio")
+                st.subheader("Lucro Total")
+                st.write(f"O lucro total é: R$ {lucro_total:.2f}")
 
-        if mostrar_informacoes_negocio:
-            st.header("Informações sobre o Negócio")
-            st.subheader("Lucro Total")
-            st.write(f"O lucro total é: R$ {lucro_total:.2f}")
+                st.subheader("Produto Mais Vendido")
+                st.write(f"O produto mais vendido é: {produto_mais_vendido}")
 
-            st.subheader("Produto Mais Vendido")
-            st.write(f"O produto mais vendido é: {produto_mais_vendido}")
-
-            st.subheader("Custo em Estoque")
-            st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
-    else:
-        st.warning("Senha incorreta! Acesso negado à visualização de dados.")
+                st.subheader("Custo em Estoque")
+                st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
+        else:
+            st.warning("Senha incorreta! Acesso negado à visualização de dados.")
 
 
 # Navegação
