@@ -98,47 +98,48 @@ def entrada_estoque():
 
     senha_armazenada = st.secrets["auth"]["senha_armazenada"]
     entrada_senha = st.sidebar.text_input("Digite a senha para acessar entrada de estoque:", type="password")
-    st.sidebar.text("Pressione Enter após digitar a senha.")
+    mostrar_senha = st.sidebar.button("Aperte o botão para confirmar sua senha.")
+    if mostrar_senha:
 
-    if entrada_senha == senha_armazenada:
-        st.header("Entrada de Estoque")
-        produto = st.text_input("Nome do Produto").upper()
-        quantidade = st.number_input("Quantidade", min_value=0, step=1)
-        setor = st.text_input("Setor do Produto").upper()
-        data_entrada = datetime.today().date()
-        data_validade = st.date_input("Data de Validade")
-        custo = st.number_input("Custo do Produto (R$)")
-        valor_venda = st.number_input("Valor de Venda (R$)")
+        if entrada_senha == senha_armazenada:
+            st.header("Entrada de Estoque")
+            produto = st.text_input("Nome do Produto").upper()
+            quantidade = st.number_input("Quantidade", min_value=0, step=1)
+            setor = st.text_input("Setor do Produto").upper()
+            data_entrada = datetime.today().date()
+            data_validade = st.date_input("Data de Validade")
+            custo = st.number_input("Custo do Produto (R$)")
+            valor_venda = st.number_input("Valor de Venda (R$)")
 
-        if produto in registro_estoque_df["Produto"].values:
-            ultimo_lote = (
-                registro_estoque_df.loc[registro_estoque_df["Produto"] == produto, "Lote"]
-                .str.extract(r"(\d+)").astype(int).max().values[0]
-            )
-            lote = f"LOTE {ultimo_lote + 1}"
+            if produto in registro_estoque_df["Produto"].values:
+                ultimo_lote = (
+                    registro_estoque_df.loc[registro_estoque_df["Produto"] == produto, "Lote"]
+                    .str.extract(r"(\d+)").astype(int).max().values[0]
+                )
+                lote = f"LOTE {ultimo_lote + 1}"
+            else:
+                lote = "LOTE 1"
+
+            if st.button("Adicionar ao Estoque"):
+                novo_produto = pd.DataFrame(
+                    {
+                        "Produto": [produto],
+                        "Lote": [lote],
+                        "Quantidade": [quantidade],
+                        "Setor": [setor],
+                        "Data de Entrada": [data_entrada],
+                        "Data de Validade": [data_validade],
+                        "Custo (R$)": [custo],
+                        "Valor de Venda (R$)": [valor_venda],
+                    }
+                )
+                registro_estoque_df = pd.concat([registro_estoque_df, novo_produto], ignore_index=True)
+
+                salvar_dados()
+                vendas_df, registro_estoque_df = init_dataframes()
+                st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}, Setor: {setor}) adicionadas ao estoque.")
         else:
-            lote = "LOTE 1"
-
-        if st.button("Adicionar ao Estoque"):
-            novo_produto = pd.DataFrame(
-                {
-                    "Produto": [produto],
-                    "Lote": [lote],
-                    "Quantidade": [quantidade],
-                    "Setor": [setor],
-                    "Data de Entrada": [data_entrada],
-                    "Data de Validade": [data_validade],
-                    "Custo (R$)": [custo],
-                    "Valor de Venda (R$)": [valor_venda],
-                }
-            )
-            registro_estoque_df = pd.concat([registro_estoque_df, novo_produto], ignore_index=True)
-
-            salvar_dados()
-            vendas_df, registro_estoque_df = init_dataframes()
-            st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}, Setor: {setor}) adicionadas ao estoque.")
-    else:
-        st.warning("Senha incorreta! Acesso negado à entrada de estoque.")
+            st.warning("Senha incorreta! Acesso negado à entrada de estoque.")
 
 
 def saida_vendas():
