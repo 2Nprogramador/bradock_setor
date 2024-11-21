@@ -204,6 +204,7 @@ def visualizar_dados():
 
     senha_armazenada = st.secrets["auth"]["senha_armazenada"]  # Altere para uma senha segura
     entrada_senha = st.sidebar.text_input("Digite a senha para visualizar dados:", type="password")
+    st.sidebar.text("Pressione Enter após digitar a senha.")
 
     if entrada_senha == senha_armazenada:
         st.header("Registro de Estoque")
