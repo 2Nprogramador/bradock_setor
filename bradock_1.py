@@ -42,10 +42,10 @@ def init_dataframes():
         registro_estoque_df = pd.DataFrame(registro_estoque_sheet.get_all_records())
         # Se o DataFrame estiver vazio, defina as colunas necessárias
         if registro_estoque_df.empty:
-            registro_estoque_df = pd.DataFrame(columns=["Produto", "Lote", "Quantidade", "Data de Entrada",
+            registro_estoque_df = pd.DataFrame(columns=["Produto","Setor", "Lote", "Quantidade", "Data de Entrada",
                                                         "Data de Validade", "Custo (R$)", "Valor de Venda (R$)"])
     except gspread.exceptions.WorksheetNotFound:
-        registro_estoque_df = pd.DataFrame(columns=["Produto", "Lote", "Quantidade", "Data de Entrada",
+        registro_estoque_df = pd.DataFrame(columns=["Produto","Setor", "Lote", "Quantidade", "Data de Entrada",
                                                     "Data de Validade", "Custo (R$)", "Valor de Venda (R$)"])
 
     return vendas_df, registro_estoque_df
