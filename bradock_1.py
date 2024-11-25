@@ -86,18 +86,29 @@ def salvar_dados():
 
 # Função para calcular o estoque atualizado
 def calcular_estoque_atualizado():
-    estoque_entrada = registro_estoque_df.groupby(["Produto", "Lote"], as_index=False)["Quantidade"].sum()
+    estoque_entrada = registro_estoque_df.groupby(["Produto", "Lote", "Setor"], as_index=False)["Quantidade"].sum()
     vendas = vendas_df.groupby(["Produto", "Lote"], as_index=False)["Quantidade"].sum()
     vendas["Quantidade"] *= -1
-    estoque_atualizado_df = pd.merge(estoque_entrada, vendas, on=["Produto", "Lote"], how="outer",
-                                     suffixes=("_entrada", "_venda"))
+    estoque_atualizado_df = pd.merge(
+        estoque_entrada,
+        vendas,
+        on=["Produto", "Lote"],
+        how="outer",
+        suffixes=("_entrada", "_venda")
+    )
     estoque_atualizado_df.fillna(0, inplace=True)
-    estoque_atualizado_df["Saldo"] = estoque_atualizado_df["Quantidade_entrada"] + estoque_atualizado_df[
-        "Quantidade_venda"]
-    estoque_atualizado_df = pd.merge(estoque_atualizado_df, registro_estoque_df[
-        ["Produto", "Lote", "Data de Entrada", "Data de Validade", "Custo (R$)"]],
-                                     on=["Produto", "Lote"], how="left")
-    estoque_atualizado_df["Custos Totais"] = estoque_atualizado_df["Saldo"] * estoque_atualizado_df["Custo (R$)"]
+    estoque_atualizado_df["Saldo"] = (
+        estoque_atualizado_df["Quantidade_entrada"] + estoque_atualizado_df["Quantidade_venda"]
+    )
+    estoque_atualizado_df = pd.merge(
+        estoque_atualizado_df,
+        registro_estoque_df[["Produto", "Lote", "Setor", "Data de Entrada", "Data de Validade", "Custo (R$)"]],
+        on=["Produto", "Lote", "Setor"],
+        how="left"
+    )
+    estoque_atualizado_df["Custos Totais"] = (
+        estoque_atualizado_df["Saldo"] * estoque_atualizado_df["Custo (R$)"]
+    )
     estoque_atualizado_df.loc[estoque_atualizado_df["Saldo"] == 0, "Data de Validade"] = ""
     return estoque_atualizado_df
 
@@ -106,10 +117,10 @@ def calcular_estoque_atualizado():
 def entrada_estoque():
     global registro_estoque_df
 
-    
     st.header("Entrada de Estoque")
     produto = st.text_input("Nome do Produto").upper()
     quantidade = st.number_input("Quantidade", min_value=0, step=1)
+    setor = st.text_input("Setor do Produto").upper()  # Novo campo
     data_entrada = datetime.today().date()
     data_validade = st.date_input("Data de Validade")
     custo = st.number_input("Custo do Produto (R$)")
@@ -118,7 +129,7 @@ def entrada_estoque():
     if produto in registro_estoque_df["Produto"].values:
         ultimo_lote = (
             registro_estoque_df.loc[registro_estoque_df["Produto"] == produto, "Lote"]
-            .str.extract(r"(\d+)")
+            .str.extract(r"(\d+)")  # Extraindo números do lote
             .astype(int)
             .max()
             .values[0]
@@ -131,6 +142,7 @@ def entrada_estoque():
         novo_produto = pd.DataFrame(
             {
                 "Produto": [produto],
+                "Setor": [setor],  # Adicionando o setor
                 "Lote": [lote],
                 "Quantidade": [quantidade],
                 "Data de Entrada": [data_entrada],
@@ -143,7 +155,7 @@ def entrada_estoque():
 
         salvar_dados()
         vendas_df, registro_estoque_df = init_dataframes()
-        st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}) adicionadas ao estoque.")
+        st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}, Setor: {setor}) adicionadas ao estoque.")
 
 
 def saida_vendas():
@@ -209,9 +221,7 @@ def saida_vendas():
 def visualizar_dados():
     vendas_df, registro_estoque_df = init_dataframes()
 
-    
     st.header("Registro de Estoque")
-
     st.dataframe(registro_estoque_df)
 
     st.header("Vendas")
@@ -221,10 +231,15 @@ def visualizar_dados():
     estoque_atualizado_df = calcular_estoque_atualizado()
     st.dataframe(estoque_atualizado_df)
 
-    vendas_com_custo_df = pd.merge(vendas_df, registro_estoque_df[["Produto", "Lote", "Custo (R$)"]],
-                                    on=["Produto", "Lote"], how="left")
-    vendas_com_custo_df["Custo Total Vendido (R$)"] = vendas_com_custo_df["Quantidade"] * vendas_com_custo_df[
-        "Custo (R$)"]
+    vendas_com_custo_df = pd.merge(
+        vendas_df,
+        registro_estoque_df[["Produto", "Lote", "Setor", "Custo (R$)"]],
+        on=["Produto", "Lote"],
+        how="left"
+    )
+    vendas_com_custo_df["Custo Total Vendido (R$)"] = (
+        vendas_com_custo_df["Quantidade"] * vendas_com_custo_df["Custo (R$)"]
+    )
     valor_total_vendido = vendas_com_custo_df["Valor Total (R$)"].sum()
     custo_total_vendido = vendas_com_custo_df["Custo Total Vendido (R$)"].sum()
     lucro_total = valor_total_vendido - custo_total_vendido
