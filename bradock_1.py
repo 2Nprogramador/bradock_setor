@@ -124,42 +124,42 @@ def entrada_estoque():
         global registro_estoque_df
 
     
-            st.header("Entrada de Estoque")
-            produto = st.text_input("Nome do Produto").upper()
-            quantidade = st.number_input("Quantidade", min_value=0, step=1)
-            setor = st.text_input("Setor do Produto").upper()
-            data_entrada = datetime.today().date()
-            data_validade = st.date_input("Data de Validade")
-            custo = st.number_input("Custo do Produto (R$)")
-            valor_venda = st.number_input("Valor de Venda (R$)")
+        st.header("Entrada de Estoque")
+        produto = st.text_input("Nome do Produto").upper()
+        quantidade = st.number_input("Quantidade", min_value=0, step=1)
+        setor = st.text_input("Setor do Produto").upper()
+        data_entrada = datetime.today().date()
+        data_validade = st.date_input("Data de Validade")
+        custo = st.number_input("Custo do Produto (R$)")
+        valor_venda = st.number_input("Valor de Venda (R$)")
 
-            if produto in registro_estoque_df["Produto"].values:
-                ultimo_lote = (
-                    registro_estoque_df.loc[registro_estoque_df["Produto"] == produto, "Lote"]
-                    .str.extract(r"(\d+)").astype(int).max().values[0]
-                )
-                lote = f"LOTE {ultimo_lote + 1}"
-            else:
-                lote = "LOTE 1"
+    if produto in registro_estoque_df["Produto"].values:
+            ultimo_lote = (
+                registro_estoque_df.loc[registro_estoque_df["Produto"] == produto, "Lote"]
+                .str.extract(r"(\d+)").astype(int).max().values[0]
+            )
+            lote = f"LOTE {ultimo_lote + 1}"
+        else:
+            lote = "LOTE 1"
 
-            if st.button("Adicionar ao Estoque"):
-                novo_produto = pd.DataFrame(
-                    {
-                        "Produto": [produto],
-                        "Lote": [lote],
-                        "Quantidade": [quantidade],
-                        "Setor": [setor],
-                        "Data de Entrada": [data_entrada],
-                        "Data de Validade": [data_validade],
-                        "Custo (R$)": [custo],
-                        "Valor de Venda (R$)": [valor_venda],
-                    }
-                )
-                registro_estoque_df = pd.concat([registro_estoque_df, novo_produto], ignore_index=True)
+        if st.button("Adicionar ao Estoque"):
+            novo_produto = pd.DataFrame(
+                {
+                    "Produto": [produto],
+                    "Lote": [lote],
+                    "Quantidade": [quantidade],
+                    "Setor": [setor],
+                    "Data de Entrada": [data_entrada],
+                    "Data de Validade": [data_validade],
+                    "Custo (R$)": [custo],
+                    "Valor de Venda (R$)": [valor_venda],
+                }
+            )
+            registro_estoque_df = pd.concat([registro_estoque_df, novo_produto], ignore_index=True)
 
-                salvar_dados()
-                vendas_df, registro_estoque_df = init_dataframes()
-                st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}, Setor: {setor}) adicionadas ao estoque.")
+            salvar_dados()
+            vendas_df, registro_estoque_df = init_dataframes()
+            st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}, Setor: {setor}) adicionadas ao estoque.")
 
 
 def saida_vendas():
