@@ -133,39 +133,39 @@ def saida_vendas():
     vendas_temp_data = []
     codigo_venda_temp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    for produto_lote in produtos_selecionados:
-        produto, lote = produto_lote.split(" - ")
-        st.subheader(f"Informações do Produto: {produto} (Lote: {lote})")
-        quantidade_disponivel = estoque_atualizado_df.loc[
-            (estoque_atualizado_df["Produto"] == produto) & (estoque_atualizado_df["Lote"] == lote), "Saldo"].values[0]
-        quantidade = st.number_input(f"Quantidade para {produto} (Lote: {lote})", min_value=1,
-                                     max_value=int(quantidade_disponivel), step=1, key=f"quantidade_{produto}_{lote}")
-        metodo_pagamento = st.selectbox("Selecione o Método de Pagamento",
-                                        options=["Dinheiro", "Pix", "Cartão de Crédito", "Cartão de Débito"],
-                                        key=f"metodo_pagamento_{produto}_{lote}")
-        valor_minimo_venda = registro_estoque_df.loc[(registro_estoque_df["Produto"] == produto) & (
-                    registro_estoque_df["Lote"] == lote), "Valor de Venda (R$)"].values[0]
-        valor_unitario = st.number_input(f"Valor Unitário (R$) para {produto} (Lote: {lote})",
-                                         min_value=valor_minimo_venda,
-                                         help=f"Digite o valor de venda mínimo de {valor_minimo_venda} para o produto.",
-                                         key=f"valor_unitario_{produto}_{lote}")
-        valor_total = valor_unitario * quantidade
-        data_hora_venda = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for produto_lote in produtos_selecionados:
+            produto, lote = produto_lote.split(" - ")
+            st.subheader(f"Informações do Produto: {produto} (Lote: {lote})")
+            quantidade_disponivel = estoque_atualizado_df.loc[
+                (estoque_atualizado_df["Produto"] == produto) & (estoque_atualizado_df["Lote"] == lote), "Saldo"].values[0]
+            quantidade = st.number_input(f"Quantidade para {produto} (Lote: {lote})", min_value=1,
+                                         max_value=int(quantidade_disponivel), step=1, key=f"quantidade_{produto}_{lote}")
+            metodo_pagamento = st.selectbox("Selecione o Método de Pagamento",
+                                            options=["Dinheiro", "Pix", "Cartão de Crédito", "Cartão de Débito"],
+                                            key=f"metodo_pagamento_{produto}_{lote}")
+            valor_minimo_venda = registro_estoque_df.loc[(registro_estoque_df["Produto"] == produto) & (
+                        registro_estoque_df["Lote"] == lote), "Valor de Venda (R$)"].values[0]
+            valor_unitario = st.number_input(f"Valor Unitário (R$) para {produto} (Lote: {lote})",
+                                             min_value=valor_minimo_venda,
+                                             help=f"Digite o valor de venda mínimo de {valor_minimo_venda} para o produto.",
+                                             key=f"valor_unitario_{produto}_{lote}")
+            valor_total = valor_unitario * quantidade
+            data_hora_venda = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        vendas_temp_data.append(
-            {"Código da Venda": codigo_venda_temp, "Produto": produto, "Lote": lote, "Quantidade": quantidade,
-             "Método de Pagamento": metodo_pagamento, "Valor Unitário (R$)": valor_unitario,
-             "Valor Total (R$)": valor_total, "Data da Venda": data_hora_venda})
+            vendas_temp_data.append(
+                {"Código da Venda": codigo_venda_temp, "Produto": produto, "Lote": lote, "Quantidade": quantidade,
+                 "Método de Pagamento": metodo_pagamento, "Valor Unitário (R$)": valor_unitario,
+                 "Valor Total (R$)": valor_total, "Data da Venda": data_hora_venda})
 
-    global vendas_temp_df
-    vendas_temp_df = pd.DataFrame(vendas_temp_data)
+        global vendas_temp_df
+        vendas_temp_df = pd.DataFrame(vendas_temp_data)
 
-    if st.button("Registrar Venda"):
-        global vendas_df
-        vendas_df = pd.concat([vendas_df, vendas_temp_df], ignore_index=True)
-        salvar_dados()
-        st.success("Venda registrada com sucesso.")
-        vendas_df, registro_estoque_df = init_dataframes()
+        if st.button("Registrar Venda"):
+            global vendas_df
+            vendas_df = pd.concat([vendas_df, vendas_temp_df], ignore_index=True)
+            salvar_dados()
+            st.success("Venda registrada com sucesso.")
+            vendas_df, registro_estoque_df = init_dataframes()
 
     st.subheader("Produtos Selecionados para Venda:")
     st.dataframe(vendas_temp_df)
