@@ -139,8 +139,8 @@ def entrada_estoque():
                 .str.extract(r"(\d+)").astype(int).max().values[0]
             )
             lote = f"LOTE {ultimo_lote + 1}"
-        else:
-            lote = "LOTE 1"
+    else:
+        lote = "LOTE 1"
 
         if st.button("Adicionar ao Estoque"):
             novo_produto = pd.DataFrame(
