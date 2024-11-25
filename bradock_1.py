@@ -187,7 +187,7 @@ page = st.sidebar.radio("Selecione uma opção", options=["Entrada de Estoque", 
 vendas_df, registro_estoque_df = init_dataframes()
 if page == "Entrada de Estoque":
     entrada_estoque()
-else page == "Vendas"
+else page == "Vendas":
     saida_vendas()
 elif page == "Visualizar Dados":
     visualizar_dados()
