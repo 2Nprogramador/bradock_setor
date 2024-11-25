@@ -106,49 +106,44 @@ def calcular_estoque_atualizado():
 def entrada_estoque():
     global registro_estoque_df
 
-    senha_armazenada = st.secrets["auth"]["senha_armazenada"]  # Defina uma senha específica no arquivo de configurações
-    entrada_senha = st.sidebar.text_input("Digite a senha para acessar entrada de estoque:", type="password")
+    
+    st.header("Entrada de Estoque")
+    produto = st.text_input("Nome do Produto").upper()
+    quantidade = st.number_input("Quantidade", min_value=0, step=1)
+    data_entrada = datetime.today().date()
+    data_validade = st.date_input("Data de Validade")
+    custo = st.number_input("Custo do Produto (R$)")
+    valor_venda = st.number_input("Valor de Venda (R$)")
 
-    if entrada_senha == senha_armazenada:
-        st.header("Entrada de Estoque")
-        produto = st.text_input("Nome do Produto").upper()
-        quantidade = st.number_input("Quantidade", min_value=0, step=1)
-        data_entrada = datetime.today().date()
-        data_validade = st.date_input("Data de Validade")
-        custo = st.number_input("Custo do Produto (R$)")
-        valor_venda = st.number_input("Valor de Venda (R$)")
-
-        if produto in registro_estoque_df["Produto"].values:
-            ultimo_lote = (
-                registro_estoque_df.loc[registro_estoque_df["Produto"] == produto, "Lote"]
-                .str.extract(r"(\d+)")
-                .astype(int)
-                .max()
-                .values[0]
-            )
-            lote = f"LOTE {ultimo_lote + 1}"
-        else:
-            lote = "LOTE 1"
-
-        if st.button("Adicionar ao Estoque"):
-            novo_produto = pd.DataFrame(
-                {
-                    "Produto": [produto],
-                    "Lote": [lote],
-                    "Quantidade": [quantidade],
-                    "Data de Entrada": [data_entrada],
-                    "Data de Validade": [data_validade],
-                    "Custo (R$)": [custo],
-                    "Valor de Venda (R$)": [valor_venda],
-                }
-            )
-            registro_estoque_df = pd.concat([registro_estoque_df, novo_produto], ignore_index=True)
-
-            salvar_dados()
-            vendas_df, registro_estoque_df = init_dataframes()
-            st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}) adicionadas ao estoque.")
+    if produto in registro_estoque_df["Produto"].values:
+        ultimo_lote = (
+            registro_estoque_df.loc[registro_estoque_df["Produto"] == produto, "Lote"]
+            .str.extract(r"(\d+)")
+            .astype(int)
+            .max()
+            .values[0]
+        )
+        lote = f"LOTE {ultimo_lote + 1}"
     else:
-        st.warning("Senha incorreta! Acesso negado à entrada de estoque.")
+        lote = "LOTE 1"
+
+    if st.button("Adicionar ao Estoque"):
+        novo_produto = pd.DataFrame(
+            {
+                "Produto": [produto],
+                "Lote": [lote],
+                "Quantidade": [quantidade],
+                "Data de Entrada": [data_entrada],
+                "Data de Validade": [data_validade],
+                "Custo (R$)": [custo],
+                "Valor de Venda (R$)": [valor_venda],
+            }
+        )
+        registro_estoque_df = pd.concat([registro_estoque_df, novo_produto], ignore_index=True)
+
+        salvar_dados()
+        vendas_df, registro_estoque_df = init_dataframes()
+        st.success(f"{quantidade} unidades de '{produto}' (Lote: {lote}) adicionadas ao estoque.")
 
 
 def saida_vendas():
@@ -214,45 +209,40 @@ def saida_vendas():
 def visualizar_dados():
     vendas_df, registro_estoque_df = init_dataframes()
 
-    senha_armazenada = st.secrets["auth"]["senha_armazenada"]  # Altere para uma senha segura
-    entrada_senha = st.sidebar.text_input("Digite a senha para visualizar dados:", type="password")
+    
+    st.header("Registro de Estoque")
 
-    if entrada_senha == senha_armazenada:
-        st.header("Registro de Estoque")
+    st.dataframe(registro_estoque_df)
 
-        st.dataframe(registro_estoque_df)
+    st.header("Vendas")
+    st.dataframe(vendas_df)
 
-        st.header("Vendas")
-        st.dataframe(vendas_df)
+    st.header("Estoque Atualizado")
+    estoque_atualizado_df = calcular_estoque_atualizado()
+    st.dataframe(estoque_atualizado_df)
 
-        st.header("Estoque Atualizado")
-        estoque_atualizado_df = calcular_estoque_atualizado()
-        st.dataframe(estoque_atualizado_df)
+    vendas_com_custo_df = pd.merge(vendas_df, registro_estoque_df[["Produto", "Lote", "Custo (R$)"]],
+                                    on=["Produto", "Lote"], how="left")
+    vendas_com_custo_df["Custo Total Vendido (R$)"] = vendas_com_custo_df["Quantidade"] * vendas_com_custo_df[
+        "Custo (R$)"]
+    valor_total_vendido = vendas_com_custo_df["Valor Total (R$)"].sum()
+    custo_total_vendido = vendas_com_custo_df["Custo Total Vendido (R$)"].sum()
+    lucro_total = valor_total_vendido - custo_total_vendido
+    produto_mais_vendido = vendas_df.groupby("Produto")["Quantidade"].sum().idxmax()
+    custo_em_estoque = estoque_atualizado_df["Custos Totais"].sum()
 
-        vendas_com_custo_df = pd.merge(vendas_df, registro_estoque_df[["Produto", "Lote", "Custo (R$)"]],
-                                       on=["Produto", "Lote"], how="left")
-        vendas_com_custo_df["Custo Total Vendido (R$)"] = vendas_com_custo_df["Quantidade"] * vendas_com_custo_df[
-            "Custo (R$)"]
-        valor_total_vendido = vendas_com_custo_df["Valor Total (R$)"].sum()
-        custo_total_vendido = vendas_com_custo_df["Custo Total Vendido (R$)"].sum()
-        lucro_total = valor_total_vendido - custo_total_vendido
-        produto_mais_vendido = vendas_df.groupby("Produto")["Quantidade"].sum().idxmax()
-        custo_em_estoque = estoque_atualizado_df["Custos Totais"].sum()
+    mostrar_informacoes_negocio = st.sidebar.checkbox("Mostrar Informações do Negócio", value=False)
 
-        mostrar_informacoes_negocio = st.sidebar.checkbox("Mostrar Informações do Negócio", value=False)
+    if mostrar_informacoes_negocio:
+        st.header("Informações sobre o Negócio")
+        st.subheader("Lucro Total")
+        st.write(f"O lucro total é: R$ {lucro_total:.2f}")
 
-        if mostrar_informacoes_negocio:
-            st.header("Informações sobre o Negócio")
-            st.subheader("Lucro Total")
-            st.write(f"O lucro total é: R$ {lucro_total:.2f}")
+        st.subheader("Produto Mais Vendido")
+        st.write(f"O produto mais vendido é: {produto_mais_vendido}")
 
-            st.subheader("Produto Mais Vendido")
-            st.write(f"O produto mais vendido é: {produto_mais_vendido}")
-
-            st.subheader("Custo em Estoque")
-            st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
-    else:
-        st.warning("Senha incorreta! Acesso negado à visualização de dados.")
+        st.subheader("Custo em Estoque")
+        st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
 
 
 # Função para saída de vendas (similar à sua função original)
