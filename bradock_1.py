@@ -248,18 +248,18 @@ def visualizar_dados():
 
         mostrar_informacoes_negocio = st.sidebar.checkbox("Mostrar Informações do Negócio", value=False)
 
-            if mostrar_informacoes_negocio:
-                st.header("Informações sobre o Negócio")
-                st.subheader("Lucro Total")
-                st.write(f"O lucro total é: R$ {lucro_total:.2f}")
+    if mostrar_informacoes_negocio:
+            st.header("Informações sobre o Negócio")
+            st.subheader("Lucro Total")
+            st.write(f"O lucro total é: R$ {lucro_total:.2f}")
 
-                st.subheader("Produto Mais Vendido")
-                st.write(f"O produto mais vendido é: {produto_mais_vendido}")
+            st.subheader("Produto Mais Vendido")
+            st.write(f"O produto mais vendido é: {produto_mais_vendido}")
 
-                st.subheader("Custo em Estoque")
-                st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
-        else:
-            st.warning("Senha incorreta! Acesso negado à visualização de dados.")
+            st.subheader("Custo em Estoque")
+            st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
+    else:
+        st.warning("Senha incorreta! Acesso negado à visualização de dados.")
 
 
 # Navegação
