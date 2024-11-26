@@ -221,6 +221,15 @@ def saida_vendas():
 def visualizar_dados():
     vendas_df, registro_estoque_df = init_dataframes()
 
+    # Ajustar o horário atual para verificar o intervalo do dia a partir das 4h da manhã
+    now = pd.Timestamp.now()
+    inicio_do_dia = pd.Timestamp(year=now.year, month=now.month, day=now.day, hour=4)
+    if now.hour < 4:  # Se for antes das 4h, considerar o início do dia anterior
+        inicio_do_dia -= pd.Timedelta(days=1)
+
+    vendas_df["Data"] = pd.to_datetime(vendas_df["Data"])  # Certificar-se de que a coluna "Data" é datetime
+    vendas_hoje_df = vendas_df[vendas_df["Data"] >= inicio_do_dia]  # Filtrar vendas do dia atual
+
     st.header("Registro de Estoque")
     st.dataframe(registro_estoque_df)
 
@@ -232,19 +241,18 @@ def visualizar_dados():
     st.dataframe(estoque_atualizado_df)
 
     vendas_com_custo_df = pd.merge(
-        vendas_df,
-        registro_estoque_df[["Produto", "Lote", "Setor", "Custo (R$)"]],
-        on=["Produto", "Lote"],
-        how="left"
+        vendas_df, registro_estoque_df[["Produto", "Lote", "Custo (R$)"]],
+        on=["Produto", "Lote"], how="left"
     )
-    vendas_com_custo_df["Custo Total Vendido (R$)"] = (
-        vendas_com_custo_df["Quantidade"] * vendas_com_custo_df["Custo (R$)"]
-    )
+    vendas_com_custo_df["Custo Total Vendido (R$)"] = vendas_com_custo_df["Quantidade"] * vendas_com_custo_df["Custo (R$)"]
     valor_total_vendido = vendas_com_custo_df["Valor Total (R$)"].sum()
     custo_total_vendido = vendas_com_custo_df["Custo Total Vendido (R$)"].sum()
     lucro_total = valor_total_vendido - custo_total_vendido
     produto_mais_vendido = vendas_df.groupby("Produto")["Quantidade"].sum().idxmax()
     custo_em_estoque = estoque_atualizado_df["Custos Totais"].sum()
+
+    # Calculando o valor total das vendas em dinheiro do dia atual
+    valor_total_hoje = vendas_hoje_df["Valor Total (R$)"].sum()
 
     mostrar_informacoes_negocio = st.sidebar.checkbox("Mostrar Informações do Negócio", value=False)
 
@@ -258,6 +266,9 @@ def visualizar_dados():
 
         st.subheader("Custo em Estoque")
         st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
+
+        st.subheader("Total Vendido Hoje (em Dinheiro)")
+        st.write(f"O valor total vendido hoje é: R$ {valor_total_hoje:.2f}")
 
 
 # Função para saída de vendas (similar à sua função original)
