@@ -259,18 +259,27 @@ def visualizar_dados():
 
         st.subheader("Total de Vendas em um Período Personalizado")
 
-        # Entrada do usuário para selecionar o período
-        inicio_periodo = st.date_input("Data de Início", value=datetime.now().date())
-        fim_periodo = st.date_input("Data de Fim", value=datetime.now().date())
+        # Entrada do usuário para selecionar o período (data e hora)
+        inicio_data = st.date_input("Data de Início", value=datetime.now().date())
+        inicio_hora = st.time_input("Hora de Início", value=time(0, 0))
+        fim_data = st.date_input("Data de Fim", value=datetime.now().date())
+        fim_hora = st.time_input("Hora de Fim", value=time(23, 59))
+
+        # Convertendo datas e horas para timestamps completos
+        inicio_periodo = datetime.combine(inicio_data, inicio_hora)
+        fim_periodo = datetime.combine(fim_data, fim_hora)
 
         if inicio_periodo > fim_periodo:
-            st.warning("A data de início não pode ser posterior à data de fim.")
+            st.warning("A data e hora de início não podem ser posteriores às de fim.")
         else:
             # Filtrando as vendas no período selecionado
-            vendas_df["Data da Venda"] = pd.to_datetime(vendas_df["Data da Venda"], errors="coerce")
+            vendas_df["Data Completa"] = pd.to_datetime(
+                vendas_df["Data da Venda"] + " " + vendas_df["Hora da Venda"],
+                errors="coerce"
+            )
             vendas_periodo_df = vendas_df[
-                (vendas_df["Data da Venda"] >= pd.Timestamp(inicio_periodo)) &
-                (vendas_df["Data da Venda"] <= pd.Timestamp(fim_periodo))
+                (vendas_df["Data Completa"] >= inicio_periodo) &
+                (vendas_df["Data Completa"] <= fim_periodo)
             ]
 
             total_vendas_periodo = vendas_periodo_df["Valor Total (R$)"].sum()
