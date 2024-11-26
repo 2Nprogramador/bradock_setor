@@ -30,12 +30,12 @@ def init_dataframes():
         # Se o DataFrame estiver vazio, defina as colunas necessárias
         if vendas_df.empty:
             vendas_df = pd.DataFrame(columns=["Código da Venda", "Produto", "Lote", "Quantidade",
-                                              "Método de Pagamento", "Data da Venda", "Valor Unitário (R$)",
+                                              "Método de Pagamento", "Data da Venda", "Hora da Venda", "Valor Unitário (R$)",
                                               "Valor Total (R$)"])
     except gspread.exceptions.WorksheetNotFound:
         vendas_df = pd.DataFrame(columns=["Código da Venda", "Produto", "Lote", "Quantidade",
-                                          "Método de Pagamento", "Data da Venda", "Valor Unitário (R$)",
-                                          "Valor Total (R$)"])
+                                              "Método de Pagamento", "Data da Venda", "Hora da Venda", "Valor Unitário (R$)",
+                                              "Valor Total (R$)"])
 
     try:
         registro_estoque_sheet = client.open("registro_estoque").worksheet("registro_estoque")
@@ -195,12 +195,13 @@ def saida_vendas():
                                          help=f"Digite o valor de venda mínimo de {valor_minimo_venda} para o produto.",
                                          key=f"valor_unitario_{produto}_{lote}")
         valor_total = valor_unitario * quantidade
-        data_hora_venda = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data_venda = datetime.now().strftime("%Y-%m-%d")
+        data_hora = datetime.now().strftime("%H:%M:%S")
 
         vendas_temp_data.append(
             {"Código da Venda": codigo_venda_temp, "Produto": produto, "Lote": lote, "Quantidade": quantidade,
              "Método de Pagamento": metodo_pagamento, "Valor Unitário (R$)": valor_unitario,
-             "Valor Total (R$)": valor_total, "Data da Venda": data_hora_venda})
+             "Valor Total (R$)": valor_total, "Data da Venda": data_venda, "Hora da Venda": data_hora})
 
     global vendas_temp_df
     vendas_temp_df = pd.DataFrame(vendas_temp_data)
