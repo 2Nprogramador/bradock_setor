@@ -284,9 +284,19 @@ def visualizar_dados():
             ]
 
             total_vendas_periodo = vendas_periodo_df["Valor Total (R$)"].sum()
-
-            # Exibindo o total vendido no período
             st.write(f"O total vendido entre {inicio_periodo} e {fim_periodo} é: R$ {total_vendas_periodo:.2f}")
+
+            # Filtro para tipos de pagamento
+            st.subheader("Total por Método de Pagamento")
+            tipos_pagamento = vendas_periodo_df["Método de Pagamento"].unique()
+            tipo_selecionado = st.selectbox("Selecione o Método de Pagamento", options=tipos_pagamento)
+
+            if tipo_selecionado:
+                vendas_filtradas = vendas_periodo_df[
+                    vendas_periodo_df["Método de Pagamento"] == tipo_selecionado
+                ]
+                total_por_pagamento = vendas_filtradas["Valor Total (R$)"].sum()
+                st.write(f"O total de vendas por {tipo_selecionado} é: R$ {total_por_pagamento:.2f}")
 
 
 # Função para saída de vendas (similar à sua função original)
