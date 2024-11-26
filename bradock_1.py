@@ -247,6 +247,7 @@ def visualizar_dados():
 
     if mostrar_informacoes_negocio:
         st.header("Informações sobre o Negócio")
+
         st.subheader("Lucro Total")
         st.write(f"O lucro total é: R$ {lucro_total:.2f}")
 
@@ -255,6 +256,27 @@ def visualizar_dados():
 
         st.subheader("Custo em Estoque")
         st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
+
+        st.subheader("Total de Vendas em um Período Personalizado")
+
+        # Entrada do usuário para selecionar o período
+        inicio_periodo = st.date_input("Data de Início", value=datetime.now().date())
+        fim_periodo = st.date_input("Data de Fim", value=datetime.now().date())
+
+        if inicio_periodo > fim_periodo:
+            st.warning("A data de início não pode ser posterior à data de fim.")
+        else:
+            # Filtrando as vendas no período selecionado
+            vendas_df["Data da Venda"] = pd.to_datetime(vendas_df["Data da Venda"], errors="coerce")
+            vendas_periodo_df = vendas_df[
+                (vendas_df["Data da Venda"] >= pd.Timestamp(inicio_periodo)) &
+                (vendas_df["Data da Venda"] <= pd.Timestamp(fim_periodo))
+            ]
+
+            total_vendas_periodo = vendas_periodo_df["Valor Total (R$)"].sum()
+
+            # Exibindo o total vendido no período
+            st.write(f"O total vendido entre {inicio_periodo} e {fim_periodo} é: R$ {total_vendas_periodo:.2f}")
 
 
 # Função para saída de vendas (similar à sua função original)
