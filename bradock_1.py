@@ -255,8 +255,6 @@ def visualizar_dados():
 
         st.subheader("Custo em Estoque")
         st.write(f"O custo em estoque é: R$ {custo_em_estoque:.2f}")
-    else:
-        visualizar_dados()
 
 
 # Função para saída de vendas (similar à sua função original)
